@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <unistd.h>
 
 const int BACKLOG_QUEUE_SIZE = 5; 
 
@@ -32,6 +33,7 @@ int main(void){
             std::cout << "Connection was refused" << std::endl;
         }else{
             std::cout << "Port opened" << std::endl;
+            close(opened_fd);
         }
     }
 

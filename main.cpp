@@ -4,10 +4,12 @@
 #include <unistd.h>
 
 const int BACKLOG_QUEUE_SIZE = 5; 
+const int RESPONSE_SIZE = 10;
 
 int main(void){
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);
-    int opened_fd = 0;
+    int openedfd = 0;
+    const char* text = "Hello World";
 
     sockaddr_in address = {
         AF_INET,
@@ -28,12 +30,22 @@ int main(void){
 
     while(1){
         std::cout << "Waiting for connection..." << std::endl;
-        opened_fd = accept(socketfd, 0, 0);
-        if(opened_fd == -1){
+        openedfd = accept(socketfd, 0, 0);
+        if(openedfd == -1){
             std::cout << "Connection was refused" << std::endl;
         }else{
             std::cout << "Port opened" << std::endl;
-            close(opened_fd);
+
+            char buffer[RESPONSE_SIZE] = "";
+            while(recv(openedfd, buffer, RESPONSE_SIZE, 0)){
+                std::cout << "recv: " << buffer << std::endl;
+                for(int i = 0; i < RESPONSE_SIZE; i++){
+                    buffer[i] = 0;
+                }
+            }
+            
+            send(openedfd, text, 11, 0);
+            close(openedfd);
         }
     }
 

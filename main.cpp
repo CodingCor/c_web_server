@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include <string.h>
 
-const int BACKLOG_QUEUE_SIZE = 5; 
-const int RESPONSE_SIZE = 10;
+const unsigned int BACKLOG_QUEUE_SIZE = 5; 
+const unsigned int RESPONSE_SIZE = 8000;
 
 int main(void){
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -40,12 +40,17 @@ int main(void){
         std::cout << "Connection opened" << std::endl;
 
         char buffer[RESPONSE_SIZE] = "";
-        while(recv(openedfd, buffer, RESPONSE_SIZE, 0)){
-            std::cout << "recv: " << buffer << std::endl;
-            memset(buffer, 0, RESPONSE_SIZE);
-        }
+        recv(openedfd, buffer, RESPONSE_SIZE, 0);
+        std::cout << "recv: " << buffer << std::endl;
+
         close(openedfd);
     }
 
     return 0;
 }
+
+// TODO: read the complete request 
+// currently a fixed size of 8000 bytes is read from the request
+// a http request can be longer than 8000 bytes and should be read to completion
+// if the request is read in multiple chunks the request should be concatenated
+// make a linked list of read chunks

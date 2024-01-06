@@ -43,6 +43,8 @@ int main(void){
         recv(openedfd, buffer, RESPONSE_SIZE, 0);
         std::cout << "recv: " << buffer << std::endl;
 
+        send(openedfd, "Connection closed\n", 18, 0);
+
         close(openedfd);
     }
 

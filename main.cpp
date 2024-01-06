@@ -1,4 +1,4 @@
-#include <iostream>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -7,9 +7,15 @@
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
 const unsigned int RESPONSE_SIZE = 8000;
 
+const char* response = 
+    "HTTP/1.1 200 OK\r\n"
+    "\r\n"
+;
+
 int main(void){
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);
     int openedfd = 0;
+    int filefd = 0;
 
     sockaddr_in address = {
         AF_INET,
@@ -19,31 +25,33 @@ int main(void){
     }; 
 
     if(bind(socketfd, (sockaddr*)&address, sizeof(address)) == -1){
-        std::cout << "Error while binding to an adress. Error Number: " << errno << std::endl;
+        printf("Error while binding to and adress. Error Number: %i", errno);
         return 1;
     }
 
     if(listen(socketfd, BACKLOG_QUEUE_SIZE) == -1){
-        std::cout << "Error listening to the specifed port" << std::endl;
+        printf("Error listening to the specifed port");
         return 1;
     }
 
     while(1){
-        std::cout << "Waiting for connection..." << std::endl;
+        printf("Waiting for connection...");
         openedfd = accept(socketfd, 0, 0);
 
         if(openedfd == -1){
-            std::cout << "Connection was refused" << std::endl;
+            printf("Connection was refused");
             continue;
         }
 
-        std::cout << "Connection opened" << std::endl;
+        printf("Connection opened" );
 
         char buffer[RESPONSE_SIZE] = "";
         recv(openedfd, buffer, RESPONSE_SIZE, 0);
-        std::cout << "recv: " << buffer << std::endl;
+        printf("recv: %s", buffer);
 
-        send(openedfd, "Connection closed\n", 18, 0);
+        send(openedfd, response, strlen(response), 0);
+
+        filefd = fopen("index.html", "r");
 
         close(openedfd);
     }

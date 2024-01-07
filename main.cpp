@@ -11,6 +11,18 @@
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
 const unsigned int RESPONSE_SIZE = 8000;
 
+enum HTTPMethod{
+    GET,
+    POST,
+};
+
+struct HTTPRequest{
+    HTTPMethod method;
+    char* path;
+};
+
+void parseRequest(char *buffer, unsigned int bufferSize);
+
 const char* response = 
     "HTTP/1.1 200 OK\r\n"
     "\r\n"
@@ -23,6 +35,11 @@ int main(void){
     sockaddr_in address = {}; 
 
     socketfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    if(socketfd == -1){
+        printf("Error while creating socket\n");
+        return 1;
+    }
 
     address.sin_family = AF_INET;
     address.sin_port = htons(8080);
@@ -65,6 +82,9 @@ int main(void){
     }
 
     return 0;
+}
+
+void parseRequest(char *buffer, unsigned int bufferSize){
 }
 
 // TODO: read the complete request 

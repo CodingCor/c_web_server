@@ -1,8 +1,12 @@
 #include <stdio.h>
+#include <errno.h>
 #include <sys/socket.h>
+#include <sys/sendfile.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
 const unsigned int RESPONSE_SIZE = 8000;
@@ -13,37 +17,37 @@ const char* response =
 ;
 
 int main(void){
-    int socketfd = socket(AF_INET, SOCK_STREAM, 0);
+    int socketfd = 0;
     int openedfd = 0;
     int filefd = 0;
+    sockaddr_in address = {}; 
 
-    sockaddr_in address = {
-        AF_INET,
-        htons(8080),
-        {INADDR_ANY},
-        {0} // padding
-    }; 
+    socketfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    address.sin_family = AF_INET;
+    address.sin_port = htons(8080);
+    address.sin_addr = {INADDR_ANY};
 
     if(bind(socketfd, (sockaddr*)&address, sizeof(address)) == -1){
-        printf("Error while binding to and adress. Error Number: %i", errno);
+        printf("Error while binding to and adress. Error Number: %i\n", errno);
         return 1;
     }
 
     if(listen(socketfd, BACKLOG_QUEUE_SIZE) == -1){
-        printf("Error listening to the specifed port");
+        printf("Error listening to the specifed port\n");
         return 1;
     }
 
     while(1){
-        printf("Waiting for connection...");
+        printf("Waiting for connection...\n");
         openedfd = accept(socketfd, 0, 0);
 
         if(openedfd == -1){
-            printf("Connection was refused");
+            printf("Connection was refused\n");
             continue;
         }
 
-        printf("Connection opened" );
+        printf("Connection opened\n");
 
         char buffer[RESPONSE_SIZE] = "";
         recv(openedfd, buffer, RESPONSE_SIZE, 0);
@@ -51,7 +55,11 @@ int main(void){
 
         send(openedfd, response, strlen(response), 0);
 
-        filefd = fopen("index.html", "r");
+        filefd = open("index.html", O_RDONLY);
+        struct stat fileStat;
+        fstat(filefd, &fileStat);
+        int fileSize = fileStat.st_size;
+        sendfile(openedfd, filefd, 0, fileSize);
 
         close(openedfd);
     }

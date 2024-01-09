@@ -68,7 +68,9 @@ int main(void){
 
         char buffer[RESPONSE_SIZE] = "";
         recv(openedfd, buffer, RESPONSE_SIZE, 0);
-        printf("recv: %s", buffer);
+        
+        //printf("recv: %s", buffer);
+        parseRequest(buffer, RESPONSE_SIZE);
 
         send(openedfd, response, strlen(response), 0);
 
@@ -85,6 +87,20 @@ int main(void){
 }
 
 void parseRequest(char *buffer, unsigned int bufferSize){
+    char* currPosition = buffer;
+    while( currPosition <= (buffer + bufferSize)){
+
+        char *endOfLine = currPosition;
+        endOfLine = strchr(currPosition, '\n'); 
+        if(endOfLine == NULL) break;
+
+        *(endOfLine) = 0;
+        if(*(endOfLine-1) == '\r'){
+            *(endOfLine-1) = 0;
+        }
+        printf("Current Parsed Line: %s\n", currPosition);
+        currPosition = (endOfLine+1);
+    }
 }
 
 // TODO: read the complete request 

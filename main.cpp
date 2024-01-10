@@ -26,7 +26,7 @@ struct HTTPRequest{
 HTTPRequest parseRequest(char *buffer, unsigned int bufferSize);
 
 /*
- * 
+ * this does not check for memory boundaries
  * */
 char* advanceNextWord(char **text, char delimiter);
 

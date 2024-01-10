@@ -19,9 +19,18 @@ enum HTTPMethod{
 struct HTTPRequest{
     HTTPMethod method;
     char* path;
+    char* versionString;
+    bool headerRead;
 };
 
-void parseRequest(char *buffer, unsigned int bufferSize);
+HTTPRequest parseRequest(char *buffer, unsigned int bufferSize);
+
+/*
+ * 
+ * */
+char* advanceNextWord(char **text, char delimiter);
+
+void debugLogRequest(HTTPRequest request);
 
 const char* response = 
     "HTTP/1.1 200 OK\r\n"
@@ -70,7 +79,8 @@ int main(void){
         recv(openedfd, buffer, RESPONSE_SIZE, 0);
         
         //printf("recv: %s", buffer);
-        parseRequest(buffer, RESPONSE_SIZE);
+        HTTPRequest request = parseRequest(buffer, RESPONSE_SIZE);
+        debugLogRequest(request);
 
         send(openedfd, response, strlen(response), 0);
 
@@ -86,8 +96,10 @@ int main(void){
     return 0;
 }
 
-void parseRequest(char *buffer, unsigned int bufferSize){
+HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
+    HTTPRequest request = {};
     char* currPosition = buffer;
+
     while( currPosition <= (buffer + bufferSize)){
 
         char *endOfLine = currPosition;
@@ -98,9 +110,55 @@ void parseRequest(char *buffer, unsigned int bufferSize){
         if(*(endOfLine-1) == '\r'){
             *(endOfLine-1) = 0;
         }
-        printf("Current Parsed Line: %s\n", currPosition);
+        //printf("Current Parsed Line: %s\n", currPosition);
+
+        if(currPosition == buffer){ // first line
+
+            char* word = 0;
+            word = advanceNextWord(&currPosition, ' ');
+            if(word == currPosition) return request;
+
+            if(strcmp(word, "GET")){
+                request.method = GET; 
+            }else if(strcmp(word, "POST")){
+                request.method = POST;
+            }
+            
+            if(word == currPosition) return request;
+
+            word = advanceNextWord(&currPosition, ' ');
+            request.path = word;
+            
+            word = advanceNextWord(&currPosition, ' ');
+            request.versionString = word;
+
+            request.headerRead = true;
+        }
         currPosition = (endOfLine+1);
     }
+    return request;
+}
+
+char* advanceNextWord(char **text, char delimiter){
+    char* word = *text;
+    char* endOfWord = strchr(*text, delimiter);
+    if(endOfWord != NULL){
+        *endOfWord = 0;
+        *text = (endOfWord + 1);
+    }
+
+    return word;
+    
+}
+
+void debugLogRequest(HTTPRequest request){
+    printf(
+        "Request Header: :\n"
+        "method: %i\n"
+        "path: %s\n"
+        "version: %s\n"
+        , request.method ,request.path, request.versionString
+    );
 }
 
 // TODO: read the complete request 

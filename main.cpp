@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
 const unsigned int RESPONSE_SIZE = 8000;
@@ -16,12 +17,20 @@ enum HTTPMethod{
     POST,
 };
 
+struct StringNode{
+    StringNode*  nextNode;
+    char* text;
+};
+
 struct HTTPRequest{
     HTTPMethod method;
     char* path;
     char* versionString;
     bool headerRead;
+    StringNode* cookies;
 };
+
+StringNode* prependToStringList(StringNode* node, char* text);
 
 HTTPRequest parseRequest(char *buffer, unsigned int bufferSize);
 
@@ -133,6 +142,8 @@ HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
             request.versionString = word;
 
             request.headerRead = true;
+        }else{ // cookie lines
+            request.cookies = prependToStringList(request.cookies, currPosition); 
         }
         currPosition = (endOfLine+1);
     }
@@ -151,6 +162,13 @@ char* advanceNextWord(char **text, char delimiter){
     
 }
 
+StringNode* prependToStringList(StringNode* node, char* text){
+    StringNode* firstNode = (StringNode*)malloc(sizeof(StringNode));
+    firstNode->nextNode = node;
+    firstNode->text = text;
+    return firstNode;
+}
+
 void debugLogRequest(HTTPRequest request){
     printf(
         "Request Header: :\n"
@@ -159,6 +177,13 @@ void debugLogRequest(HTTPRequest request){
         "version: %s\n"
         , request.method ,request.path, request.versionString
     );
+
+    StringNode* node = request.cookies;
+    while(node != NULL){
+        printf("Cookie: %s\n", node->text);
+        node = node->nextNode;
+    }
+    printf("\n");
 }
 
 // TODO: read the complete request 

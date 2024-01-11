@@ -28,6 +28,7 @@ struct HTTPRequest{
     char* versionString;
     bool headerRead;
     StringNode* cookies;
+    char *body;
 };
 
 StringNode* prependToStringList(StringNode* node, char* text);
@@ -115,17 +116,20 @@ HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
         endOfLine = strchr(currPosition, '\n'); 
         if(endOfLine == NULL) break;
 
+        char *line = currPosition; 
+        currPosition = (endOfLine+1);
+
         *(endOfLine) = 0;
         if(*(endOfLine-1) == '\r'){
             *(endOfLine-1) = 0;
         }
         //printf("Current Parsed Line: %s\n", currPosition);
 
-        if(currPosition == buffer){ // first line
+        if(line == buffer){ // first line
 
             char* word = 0;
-            word = advanceNextWord(&currPosition, ' ');
-            if(word == currPosition) return request;
+            word = advanceNextWord(&line, ' ');
+            if(word == line) return request;
 
             if(strcmp(word, "GET")){
                 request.method = GET; 
@@ -133,20 +137,24 @@ HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
                 request.method = POST;
             }
             
-            if(word == currPosition) return request;
+            if(word == line) return request;
 
-            word = advanceNextWord(&currPosition, ' ');
+            word = advanceNextWord(&line, ' ');
             request.path = word;
             
-            word = advanceNextWord(&currPosition, ' ');
+            word = advanceNextWord(&line, ' ');
             request.versionString = word;
 
-            request.headerRead = true;
         }else{ // cookie lines
-            request.cookies = prependToStringList(request.cookies, currPosition); 
+            request.cookies = prependToStringList(request.cookies, line); 
+            if(strlen(line) == 0){
+                break;
+            }
         }
-        currPosition = (endOfLine+1);
     }
+
+    request.body = currPosition;
+    request.headerRead = true;
     return request;
 }
 
@@ -183,6 +191,9 @@ void debugLogRequest(HTTPRequest request){
         printf("Cookie: %s\n", node->text);
         node = node->nextNode;
     }
+
+    printf("Body: \n");
+    printf("%s", request.body);
     printf("\n");
 }
 

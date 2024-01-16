@@ -35,6 +35,8 @@ StringNode* prependToStringList(StringNode* node, char* text);
 
 HTTPRequest parseRequest(char *buffer, unsigned int bufferSize);
 
+void sendResponse(int fd);
+
 /*
  * this does not check for memory boundaries
  * */
@@ -50,7 +52,6 @@ const char* response =
 int main(void){
     int socketfd = 0;
     int openedfd = 0;
-    int filefd = 0;
     sockaddr_in address = {}; 
 
     socketfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -87,18 +88,12 @@ int main(void){
 
         char buffer[RESPONSE_SIZE] = "";
         recv(openedfd, buffer, RESPONSE_SIZE, 0);
-        
         //printf("recv: %s", buffer);
         HTTPRequest request = parseRequest(buffer, RESPONSE_SIZE);
         debugLogRequest(request);
 
-        send(openedfd, response, strlen(response), 0);
-
-        filefd = open("index.html", O_RDONLY);
-        struct stat fileStat;
-        fstat(filefd, &fileStat);
-        int fileSize = fileStat.st_size;
-        sendfile(openedfd, filefd, 0, fileSize);
+        // send the response to the client
+        sendResponse(openedfd);
 
         close(openedfd);
     }
@@ -168,6 +163,16 @@ char* advanceNextWord(char **text, char delimiter){
 
     return word;
     
+} 
+
+void sendResponse(int fd){
+    send(fd, response, strlen(response), 0);
+
+    int filefd = open("index.html", O_RDONLY);
+    struct stat fileStat;
+    fstat(filefd, &fileStat);
+    int fileSize = fileStat.st_size;
+    sendfile(fd, filefd, 0, fileSize);
 }
 
 StringNode* prependToStringList(StringNode* node, char* text){

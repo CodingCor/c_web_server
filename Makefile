@@ -7,25 +7,22 @@ CPPFLAGS :=
 
 BUILDDIR := ./build
 
-# DEBUG Target
-.PHONY: debug
-debug: BUILDDIR := ./build/Debug
-debug: CXXFLAGS += -Og -g
-debug: webserver
+OBJECTS := ${BUILDDIR}/main.o
+OBJECTS += ${BUILDDIR}/cookiemap.o
 
-# RELEASE Target
-.PHONY: release
-release: BUILDDIR := ./build/Release
-release: CXXFLAGS += -O2 
-release: webserver
+CXXFLAGS += -Og -g 
+# CXXFLAGS += -O2
 
 # link the target here
-webserver: builddir main
-	$(CXX) $(CXXFLAGS) $(BUILDDIR)/main.o -o $(BUILDDIR)/webserver $(LDFLAGS) $(LDLIBS)
+${BUILDDIR}/webserver: builddir ${OBJECTS}
+	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(BUILDDIR)/webserver $(LDFLAGS) $(LDLIBS)
 
 # compile all objects here
-main: main.cpp
+${BUILDDIR}/main.o: main.cpp include/cookiemap.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c main.cpp -o $(BUILDDIR)/main.o
+
+${BUILDDIR}/cookiemap.o: src/cookiemap.cpp include/cookiemap.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c src/cookiemap.cpp -o $(BUILDDIR)/cookiemap.o
 
 # create build folder if not exists
 .PHONY: builddir
@@ -35,6 +32,7 @@ builddir:
 # clean up build directory
 .PHONY: clean
 clean: 
-	rm -rf $(BUILDDIR)/*
+	rm -rf ${OBJECTS}
+	rm -rf ${BUILDDIR}/webserver
 	rm -f ./compile_commands.json
 

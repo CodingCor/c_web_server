@@ -14,12 +14,6 @@
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
 const unsigned int RESPONSE_SIZE = 8000;
 
-struct StringNode{
-    StringNode*  nextNode;
-    char* text;
-};
-StringNode* prependToStringList(StringNode* node, char* text);
-
 void dumpBuffer(char* buffer, unsigned int bufferSize);
 
 enum HTTPMethod{
@@ -204,13 +198,6 @@ void sendResponse(int fd){
     fstat(filefd, &fileStat);
     int fileSize = fileStat.st_size;
     sendfile(fd, filefd, 0, fileSize);
-}
-
-StringNode* prependToStringList(StringNode* node, char* text){
-    StringNode* firstNode = (StringNode*)malloc(sizeof(StringNode));
-    firstNode->nextNode = node;
-    firstNode->text = text;
-    return firstNode;
 }
 
 void debugLogRequest(HTTPRequest request){

@@ -10,63 +10,14 @@
 #include <stdlib.h>
 
 #include "include/cookiemap.h"
+#include "include/http.h"
 
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
 const unsigned int RESPONSE_SIZE = 8000;
 
 void dumpBuffer(char* buffer, unsigned int bufferSize);
 
-enum HTTPMethod{
-    GET,
-    POST,
-};
-
-struct HTTPRequest{
-    HTTPMethod method;
-    char* path;
-    char* versionString;
-    bool headerRead;
-    HeaderMap cookies;
-    char *body;
-};
-
-HTTPRequest parseRequest(char *buffer, unsigned int bufferSize);
-
-void sendResponse(int fd);
-
-/*
- * this does not check for memory boundaries
- * */
-char* advanceNextWord(char **text, char delimiter);
-
-void debugLogRequest(HTTPRequest request);
-
-const char* response = 
-    "HTTP/1.1 200 OK\r\n"
-    "\r\n"
-;
-
 int main(void){
-    //HeaderMap map = createHeaderMap();
-    //printf(
-    //    "Map created: \n"
-    //    "cap: %i\n"
-    //    "data address: %p\n",
-    //    map.capacity, map.data
-    //);
-
-    //insertCookie(&map, {(char*)"Accept-Encoding", (char*)"value1"});
-    //insertCookie(&map, {(char*)"Accept-Content", (char*)"value2"});
-    //insertCookie(&map, {(char*)"Content-Length", (char*)"value3"});
-    //insertCookie(&map, {(char*)"Accept-Types", (char*)"value4"});
-    //printf("got cookie: %s \n",getCookie(&map, (char*)"cookie").value);
-    //insertCookie(&map, {(char*)"cookie", (char*)"value5"});
-    //insertCookie(&map, {(char*)"cookie", (char*)"value6"});
-
-    //printHeaderMapPointer(&map);
-
-    //printf("got cookie: %s \n",getCookie(&map, (char*)"cookie").value);
-
     int socketfd = 0;
     int openedfd = 0;
     sockaddr_in address = {}; 
@@ -119,117 +70,6 @@ int main(void){
 
     return 0;
 }
-
-HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
-    HTTPRequest request = {};
-    request.cookies = createHeaderMap();
-    char* currPosition = buffer;
-
-    while( currPosition <= (buffer + bufferSize)){
-
-        char *endOfLine = currPosition;
-        endOfLine = strchr(currPosition, '\n'); 
-        if(endOfLine == NULL) break;
-
-        char *line = currPosition; 
-        currPosition = (endOfLine+1);
-
-        *(endOfLine) = 0;
-        if(*(endOfLine-1) == '\r'){
-            *(endOfLine-1) = 0;
-        }
-        //printf("Current Parsed Line: %s\n", currPosition);
-
-        if(line == buffer){ // first line
-
-            char* word = 0;
-            word = advanceNextWord(&line, ' ');
-            if(word == line) return request;
-
-            if(strcmp(word, "GET")){
-                request.method = GET; 
-            }else if(strcmp(word, "POST")){
-                request.method = POST;
-            }
-            
-            if(word == line) return request;
-
-            word = advanceNextWord(&line, ' ');
-            request.path = word;
-            
-            word = advanceNextWord(&line, ' ');
-            request.versionString = word;
-
-        }else{ // cookie lines
-            if(strlen(line) == 0){
-                break;
-            }
-            char* key = line;
-            char* value = strchr(line, ':');
-            if(value == NULL) break;
-            *value = 0;
-            value++;
-            insertCookie(&request.cookies, {key, value});
-        }
-    }
-
-    request.body = currPosition;
-    request.headerRead = true;
-    return request;
-}
-
-char* advanceNextWord(char **text, char delimiter){
-    char* word = *text;
-    char* endOfWord = strchr(*text, delimiter);
-    if(endOfWord != NULL){
-        *endOfWord = 0;
-        *text = (endOfWord + 1);
-    }
-
-    return word;
-    
-} 
-
-void sendResponse(int fd){
-    send(fd, response, strlen(response), 0);
-
-    int filefd = open("index.html", O_RDONLY);
-    struct stat fileStat;
-    fstat(filefd, &fileStat);
-    int fileSize = fileStat.st_size;
-    sendfile(fd, filefd, 0, fileSize);
-}
-
-void debugLogRequest(HTTPRequest request){
-    printf(
-        "Request Header: :\n"
-        "method: %i\n"
-        "path: %s\n"
-        "version: %s\n"
-        , request.method ,request.path, request.versionString
-    );
-
-    // print cookie map
-    printf("Cookies: \n");
-    HeaderMap node = request.cookies;
-    for(unsigned int i = 0; i < node.capacity; i++){
-        if(node.data[i].key == NULL) continue;
-        printf(" %s : %s \n", node.data[i].key, node.data[i].value); 
-    }
-
-    printf("Body: \n");
-    printf("%s", request.body);
-    printf("\n");
-}
-
-void dumpBuffer(char* buffer, unsigned int bufferSize){
-    printf("Buffer Dump of %p of length: %i \n", buffer, bufferSize);
-    for(unsigned int i = 0; i < bufferSize; i++){
-        printf("%c", buffer[i]);
-        }
-    printf("\n");
-}
-
 // TODO: read the complete request 
 // currently a fixed size of 8000 bytes is read from the request
 // a http request can be longer than 8000 bytes and should be read to completion

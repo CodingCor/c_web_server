@@ -14,6 +14,9 @@ const char* response =
     "\r\n"
 ;
 
+/*
+ * this does not check for memory boundaries
+ * */
 char* advanceNextWord(char **text, char delimiter);
 
 void sendResponse(int fd){

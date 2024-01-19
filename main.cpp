@@ -9,8 +9,8 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-//const unsigned int BACKLOG_QUEUE_SIZE = 5; 
-//const unsigned int RESPONSE_SIZE = 8000;
+const unsigned int BACKLOG_QUEUE_SIZE = 5; 
+const unsigned int RESPONSE_SIZE = 8000;
 
 struct StringNode{
     StringNode*  nextNode;
@@ -44,7 +44,7 @@ struct HTTPRequest{
     char* path;
     char* versionString;
     bool headerRead;
-    StringNode* cookies;
+    HeaderMap cookies;
     char *body;
 };
 
@@ -65,27 +65,26 @@ const char* response =
 ;
 
 int main(void){
-    HeaderMap map = createHeaderMap();
-    printf(
-        "Map created: \n"
-        "cap: %i\n"
-        "data address: %p\n",
-        map.capacity, map.data
-    );
+    //HeaderMap map = createHeaderMap();
+    //printf(
+    //    "Map created: \n"
+    //    "cap: %i\n"
+    //    "data address: %p\n",
+    //    map.capacity, map.data
+    //);
 
-    insertCookie(&map, {(char*)"Accept-Encoding", (char*)"value1"});
-    insertCookie(&map, {(char*)"Accept-Content", (char*)"value2"});
-    insertCookie(&map, {(char*)"Content-Length", (char*)"value3"});
-    insertCookie(&map, {(char*)"Accept-Types", (char*)"value4"});
-    printf("got cookie: %s \n",getCookie(&map, (char*)"cookie").value);
-    insertCookie(&map, {(char*)"cookie", (char*)"value5"});
-    insertCookie(&map, {(char*)"cookie", (char*)"value6"});
+    //insertCookie(&map, {(char*)"Accept-Encoding", (char*)"value1"});
+    //insertCookie(&map, {(char*)"Accept-Content", (char*)"value2"});
+    //insertCookie(&map, {(char*)"Content-Length", (char*)"value3"});
+    //insertCookie(&map, {(char*)"Accept-Types", (char*)"value4"});
+    //printf("got cookie: %s \n",getCookie(&map, (char*)"cookie").value);
+    //insertCookie(&map, {(char*)"cookie", (char*)"value5"});
+    //insertCookie(&map, {(char*)"cookie", (char*)"value6"});
 
-    printHeaderMapPointer(&map);
+    //printHeaderMapPointer(&map);
 
-    printf("got cookie: %s \n",getCookie(&map, (char*)"cookie").value);
+    //printf("got cookie: %s \n",getCookie(&map, (char*)"cookie").value);
 
-    /*
     int socketfd = 0;
     int openedfd = 0;
     sockaddr_in address = {}; 
@@ -134,13 +133,12 @@ int main(void){
         close(openedfd);
     }
 
-    */
-
     return 0;
 }
 
 HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
     HTTPRequest request = {};
+    request.cookies = createHeaderMap();
     char* currPosition = buffer;
 
     while( currPosition <= (buffer + bufferSize)){
@@ -179,10 +177,15 @@ HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
             request.versionString = word;
 
         }else{ // cookie lines
-            request.cookies = prependToStringList(request.cookies, line); 
             if(strlen(line) == 0){
                 break;
             }
+            char* key = line;
+            char* value = strchr(line, ':');
+            if(value == NULL) break;
+            *value = 0;
+            value++;
+            insertCookie(&request.cookies, {key, value});
         }
     }
 
@@ -229,10 +232,12 @@ void debugLogRequest(HTTPRequest request){
         , request.method ,request.path, request.versionString
     );
 
-    StringNode* node = request.cookies;
-    while(node != NULL){
-        printf("Cookie: %s\n", node->text);
-        node = node->nextNode;
+    // print cookie map
+    printf("Cookies: \n");
+    HeaderMap node = request.cookies;
+    for(unsigned int i = 0; i < node.capacity; i++){
+        if(node.data[i].key == NULL) continue;
+        printf(" %s : %s \n", node.data[i].key, node.data[i].value); 
     }
 
     printf("Body: \n");

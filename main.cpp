@@ -11,6 +11,7 @@
 
 #include "include/cookiemap.h"
 #include "include/http.h"
+#include "include/util.h"
 
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
 const unsigned int RESPONSE_SIZE = 8000;

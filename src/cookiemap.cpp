@@ -69,10 +69,3 @@ HeaderEntry getCookie(HeaderMap *map, char* key){
     return {};
 }
 
-void printHeaderMapPointer(HeaderMap *map){
-    for(unsigned int i = 0; i < map->capacity; i++){
-        HeaderEntry entry = map->data[i];
-        printf("Hash: %i \t", (entry.key == NULL) ? 0 : headerHash(map, entry.key));
-        printf("Key PTR: %p \t Value PTR: %p\n", entry.key, entry.value);
-    }
-}

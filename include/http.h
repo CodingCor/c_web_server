@@ -20,4 +20,3 @@ HTTPRequest parseRequest(char *buffer, unsigned int bufferSize);
 
 void sendResponse(int fd);
 
-void debugLogRequest(HTTPRequest request);

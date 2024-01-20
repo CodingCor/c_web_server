@@ -14,9 +14,7 @@
 #include "include/util.h"
 
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
-const unsigned int RESPONSE_SIZE = 8000;
-
-void dumpBuffer(char* buffer, unsigned int bufferSize);
+const unsigned int REQUEST_SIZE = 8000;
 
 int main(void){
     int socketfd = 0;
@@ -55,13 +53,13 @@ int main(void){
 
         printf("Connection opened\n");
 
-        char buffer[RESPONSE_SIZE] = "";
-        recv(openedfd, buffer, RESPONSE_SIZE, 0);
+        char buffer[REQUEST_SIZE] = "";
+        recv(openedfd, buffer, REQUEST_SIZE, 0);
         //printf("recv: %s", buffer);
-        HTTPRequest request = parseRequest(buffer, RESPONSE_SIZE);
+        HTTPRequest request = parseRequest(buffer, REQUEST_SIZE);
         debugLogRequest(request);
 
-        dumpBuffer(buffer, RESPONSE_SIZE);
+        dumpBuffer(buffer, REQUEST_SIZE);
 
         // send the response to the client
         sendResponse(openedfd);

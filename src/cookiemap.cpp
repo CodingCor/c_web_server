@@ -8,6 +8,7 @@ HeaderMap createHeaderMap(unsigned int capacity){
     HeaderMap map;
     map.capacity = capacity;
     map.data = (HeaderEntry*)malloc(sizeof(HeaderEntry) * capacity);
+    memset(map.data, 0, sizeof(HeaderEntry) * capacity);
     return map;
 }
 

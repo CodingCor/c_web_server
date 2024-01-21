@@ -32,6 +32,20 @@ void debugLogRequest(HTTPRequest request){
     printf("\n");
 }
 
+void debugLogResponse(HTTPResponse response){
+
+    printf(
+        "Response Header:\n"
+        "statusCode: %i\n"
+        "statusMessage: %s\n"
+        "version: %s\n"
+        , response.statusCode ,response.statusMessage, response.versionString
+    );
+
+    printf("Response Body: \n");
+    printf("%.*s\n", response.bodyLength,response.body);
+}
+
 void printHeaderMapPointer(HeaderMap *map){
     for(unsigned int i = 0; i < map->capacity; i++){
         HeaderEntry entry = map->data[i];

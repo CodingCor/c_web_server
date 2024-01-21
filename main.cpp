@@ -54,15 +54,15 @@ int main(void){
         printf("Connection opened\n");
 
         char buffer[REQUEST_SIZE] = "";
+        printf("Memory Adress buffer: %p \n", buffer);
         recv(openedfd, buffer, REQUEST_SIZE, 0);
-        //printf("recv: %s", buffer);
         HTTPRequest request = parseRequest(buffer, REQUEST_SIZE);
-        debugLogRequest(request);
 
-        dumpBuffer(buffer, REQUEST_SIZE);
+        HTTPResponse responseFromRequest = handleRequest(request);
 
-        // send the response to the client
-        sendResponse(openedfd);
+        //debugLogResponse(responseFromRequest);
+
+        sendHttpResponse(openedfd, responseFromRequest);
 
         close(openedfd);
     }

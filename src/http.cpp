@@ -33,8 +33,14 @@ void sendResponse(int fd){
 }
 
 void sendHttpResponse(int fd, HTTPResponse response){
-    char header[100] = "";
-    snprintf(header, 100, "%s %i %s\r\n\r\n", response.versionString, response.statusCode, response.statusMessage);
+    char header[300] = "";
+    snprintf(
+        header, 300, 
+        "%s %i %s\r\n"
+        "Content-Length: %i\r\n"
+        "Content-Type: text/html\r\n"
+        "\r\n", 
+        response.versionString, response.statusCode, response.statusMessage, response.bodyLength);
     unsigned int headerSize = strlen(header);
     
     send(fd, header, headerSize, 0);
@@ -135,6 +141,7 @@ HTTPResponse handleRequest(HTTPRequest request){
     }
     
     response.statusCode = 200;
+    response.versionString = (char*)HTTP_VERSION;
     response.statusMessage = getHttpStatusMessage(response.statusCode);
 
     int fd = -1;

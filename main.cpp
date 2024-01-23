@@ -64,6 +64,10 @@ int main(void){
 
         sendHttpResponse(openedfd, responseFromRequest);
 
+        free(buffer);
+        free(request.cookies.data);
+        free(responseFromRequest.body);
+
         close(openedfd);
     }
 

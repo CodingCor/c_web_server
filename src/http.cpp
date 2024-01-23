@@ -55,18 +55,13 @@ HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
 
     while( currPosition <= (buffer + bufferSize)){
 
+        char *line = advanceNextWord(&currPosition, '\n');
         char *endOfLine = currPosition;
-        endOfLine = strchr(currPosition, '\n'); 
-        if(endOfLine == NULL) break;
+        if(line == currPosition) break;
 
-        char *line = currPosition; 
-        currPosition = (endOfLine+1);
-
-        *(endOfLine) = 0;
-        if(*(endOfLine-1) == '\r'){
-            *(endOfLine-1) = 0;
+        if(*(endOfLine-2) == '\r'){
+            *(endOfLine-2) = 0;
         }
-        //printf("Current Parsed Line: %s\n", currPosition);
 
         if(line == buffer){ // first line
 
@@ -92,11 +87,10 @@ HTTPRequest parseRequest(char *buffer, unsigned int bufferSize){
             if(strlen(line) == 0){
                 break;
             }
-            char* key = line;
-            char* value = strchr(line, ':');
-            if(value == NULL) break;
-            *value = 0;
-            value++;
+
+            char *value = line;
+            char* key = advanceNextWord(&value, ':');
+            if(key == value || value == NULL) break;
             insertCookie(&request.cookies, {key, value});
         }
     }

@@ -53,7 +53,7 @@ int main(void){
 
         printf("Connection opened\n");
 
-        char buffer[REQUEST_SIZE] = "";
+        char *buffer  = (char*)malloc(REQUEST_SIZE);
         printf("Memory Adress buffer: %p \n", buffer);
         recv(openedfd, buffer, REQUEST_SIZE, 0);
         HTTPRequest request = parseRequest(buffer, REQUEST_SIZE);

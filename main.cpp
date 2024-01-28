@@ -9,12 +9,16 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
+#include <pthread.h>
+
 #include "include/cookiemap.h"
 #include "include/http.h"
 #include "include/util.h"
 
 const unsigned int BACKLOG_QUEUE_SIZE = 5; 
 const unsigned int REQUEST_SIZE = 8000;
+
+void* handleConnection(void* openedfd);
 
 int main(void){
     int socketfd = 0;
@@ -51,26 +55,35 @@ int main(void){
             continue;
         }
 
-        printf("Connection opened\n");
-
-        char *buffer  = (char*)malloc(REQUEST_SIZE);
-        recv(openedfd, buffer, REQUEST_SIZE, 0);
-        HTTPRequest request = parseRequest(buffer, REQUEST_SIZE);
-
-        HTTPResponse responseFromRequest = handleRequest(request);
-
-        //debugLogResponse(responseFromRequest);
-
-        sendHttpResponse(openedfd, responseFromRequest);
-
-        free(buffer);
-        free(request.cookies.data);
-        free(responseFromRequest.body);
-
-        close(openedfd);
+        pthread_t thread; 
+        pthread_create(&thread, NULL, handleConnection, (void*)&openedfd);
     }
 
+    pthread_exit(NULL);
+
     return 0;
+}
+
+void* handleConnection(void* vargs){
+    unsigned int *openedfd = (unsigned int*)vargs;
+    printf("Connection opened in thread %li \n", pthread_self());
+    char *buffer  = (char*)malloc(REQUEST_SIZE);
+    recv(*openedfd, buffer, REQUEST_SIZE, 0);
+    HTTPRequest request = parseRequest(buffer, REQUEST_SIZE);
+
+    HTTPResponse responseFromRequest = handleRequest(request);
+
+    //debugLogResponse(responseFromRequest);
+
+    sendHttpResponse(*openedfd, responseFromRequest);
+
+    free(buffer);
+    free(request.cookies.data);
+    free(responseFromRequest.body);
+    close(*openedfd);
+
+    sleep(10);
+    return NULL;
 }
 // TODO: read the complete request 
 // currently a fixed size of 8000 bytes is read from the request

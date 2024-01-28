@@ -152,14 +152,12 @@ HTTPResponse handleRequest(HTTPRequest request){
 
     struct stat fileStat;
     fstat(fd, &fileStat);
-
     unsigned int fileSizeInBytes = fileStat.st_size;
 
     FILE* file = fdopen(fd, "r");
-
     char *fileContent = (char*)malloc(fileSizeInBytes);
-
     fread(fileContent, sizeof(char), fileSizeInBytes, file);
+
     fclose(file);
 
     response.body = fileContent;
